@@ -3,6 +3,16 @@ defmodule TransformMap do
   Documentation for TransformMap.
   """
 
+  defp convert_decimal(value) do
+    case Decimal.decimal?(value) do
+      true ->
+        value
+        |> Decimal.to_float()
+      false ->
+        value
+    end
+  end
+
   defp list_value(value) do
     case is_list(value) do
       true ->
@@ -57,11 +67,16 @@ defmodule TransformMap do
         :error ->
           value
         :ok ->
-          case is_map(temp_map) do
+          case Decimal.decimal?(temp_map) do
             true ->
-              other_keys(map, temp_map, value, delimiter)
-            false ->
               join_value(value, delimiter)
+            false ->
+              case is_map(temp_map) do
+                true ->
+                  other_keys(map, temp_map, value, delimiter)
+                false ->
+                  join_value(value, delimiter)
+              end
           end
       end
   end
@@ -266,6 +281,7 @@ defmodule TransformMap do
         data =
           map
           |> get_in(list)
+          |> convert_decimal()
         final_data =
           convert_nil(data, convert_nil)
         _new_map =
@@ -295,6 +311,7 @@ defmodule TransformMap do
         data =
           map
           |> get_in(list)
+          |> convert_decimal()
         final_data =
           convert_nil(data, convert_nil)
         new_map =

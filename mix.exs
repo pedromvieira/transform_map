@@ -45,6 +45,7 @@ defmodule TransformMap.MixProject do
       {:csvlixir, ">= 2.0.0"},
       {:elixlsx, ">= 0.4.0"},
       {:exjsx, ">= 4.0.0"},
+      {:decimal, ">= 1.5.0"},
     ]
   end
 end
