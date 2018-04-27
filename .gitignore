@@ -1,0 +1,12 @@
+# App artifacts
+.DS_Store
+/temp
+/_build
+/db
+/deps
+/*.ez
+/cover/
+/doc/
+/.fetch
+erl_crash.dump
+transform_map-*.tar
