@@ -417,11 +417,15 @@ defmodule TransformMap do
     new =
       list
       |> Enum.reduce([], fn x, acc ->
-        value =
+        value_1 =
           x
           |> List.delete_at(-1)
+        value_2 =
+          value_1
+          |> List.delete_at(-1)
         _acc =
-          [value]
+          [value_1]
+          |> Enum.concat([value_2])
           |> Enum.into(acc)
       end)
       |> Enum.uniq()
