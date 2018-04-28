@@ -10,7 +10,7 @@ Transform Elixir Deeply Nested Maps into flat maps or 2 dimensional array. Expor
 
 def deps do
   [
-    {:transform_map, "~> 1.0.1"}
+    {:transform_map, "~> 1.0.2"}
   ]
 end
 
@@ -40,6 +40,9 @@ end
 
 ## News
 
+- **2018/04/28**
+  - Default delimiter "."
+  - Fix first level list of maps
 - **2018/04/28**
   - Decimal validation
 - **2018/04/27**
