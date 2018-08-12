@@ -10,7 +10,7 @@ Transform Elixir Deeply Nested Maps into flat maps or 2 dimensional array. Expor
 
 def deps do
   [
-    {:transform_map, "~> 1.0.2"}
+    {:transform_map, ">= 1.0.0"}
   ]
 end
 
@@ -28,18 +28,20 @@ end
 
   iex> TransformMap.multiple_keys(shrink_map, true)
 
-  iex> TransformMap.multiple_to_array(map, "|", true, true) |> TransformMap.Export.to_csv("test.csv", true)
+  iex> TransformMap.multiple_to_array(map, "|", true, true) |> TransformMap.Export.to_csv("test.csv", true, "temp/report")
 
-  iex> TransformMap.multiple_to_array(map, "|", true, true) |> TransformMap.Export.to_xlsx("test.xlsx", true)
+  iex> TransformMap.multiple_to_array(map, "|", true, true) |> TransformMap.Export.to_xlsx("test.xlsx", true, "temp/report")
 
-  iex> map |> TransformMap.Export.to_json("test.json", true)
+  iex> map |> TransformMap.Export.to_json("test.json", true, "temp/report")
 
-  iex> "temp/test.csv" |> TransformMap.Export.to_gzip()
+  iex> "temp/report/test.csv" |> TransformMap.Export.to_gzip()
 
 ```
 
 ## News
 
+- **2018/08/12**
+  - Choose export directory.
 - **2018/04/28**
   - Default delimiter "."
   - Fix first level list of maps

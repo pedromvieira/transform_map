@@ -1,13 +1,12 @@
-# App artifacts
-.DS_Store
-/temp
-/_build
-/db
-/deps
-/*.ez
+/_build/
 /cover/
+/deps/
 /doc/
 /.fetch
+/temp/
+.elixir_ls/
+.DS_Store
+.secrets
+*.tar.gz
 erl_crash.dump
-transform_map-*.tar
-.iex.exs
+*.ez
