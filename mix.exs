@@ -5,7 +5,7 @@ defmodule TransformMap.MixProject do
     [
       app: :transform_map,
       version: "1.0.3",
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -40,7 +40,7 @@ defmodule TransformMap.MixProject do
 
   defp deps do
     [
-      {:ex_doc, ">= 0.18.0", only: :dev},
+      {:ex_doc, ">= 0.19.0", only: :dev},
       {:parallel_stream, ">= 1.0.0"},
       {:csvlixir, ">= 2.0.0"},
       {:elixlsx, ">= 0.4.0"},

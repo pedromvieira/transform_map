@@ -5,6 +5,7 @@
 /.fetch
 /temp/
 .elixir_ls/
+.vscode/
 .DS_Store
 .secrets
 *.tar.gz
