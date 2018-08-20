@@ -162,12 +162,14 @@ defmodule TransformMap do
     end
   end
 
-  defp list_to_tuple(data) when is_list(data) do
-    # "\"#{data}\""
+  defp list_to_string(data) when is_list(data) do
     data
+    |> Enum.map(fn x ->
+      "#{x}\n"
+    end)
     |> List.to_string()
   end
-  defp list_to_tuple(data), do: data
+  defp list_to_string(data), do: data
 
   defp to_array_parallel(header, data, convert_nil) do
     data =
@@ -182,7 +184,7 @@ defmodule TransformMap do
             final_value =
               value
               |> convert_nil(convert_nil)
-              |> list_to_tuple()
+              |> list_to_string()
             [final_value]
           end)
           |> Enum.into([])

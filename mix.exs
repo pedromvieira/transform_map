@@ -4,7 +4,7 @@ defmodule TransformMap.MixProject do
   def project do
     [
       app: :transform_map,
-      version: "1.0.4",
+      version: "1.0.5",
       elixir: "~> 1.7",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env() == :prod,
