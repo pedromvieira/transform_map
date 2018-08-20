@@ -10,7 +10,7 @@ Transform Elixir Deeply Nested Maps into flat maps or 2 dimensional array. Expor
 
 def deps do
   [
-    {:transform_map, ">= 1.0.0"}
+    {:transform_map, ">= 1.0.4"}
   ]
 end
 
@@ -40,6 +40,8 @@ end
 
 ## News
 
+- **2018/08/20**
+  - Transform list to string to export to csv and xlsx (multiple_to_array).
 - **2018/08/12**
   - Choose export directory.
 - **2018/04/28**
