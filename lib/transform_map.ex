@@ -55,7 +55,7 @@ defmodule TransformMap do
             x
             |> shrink(delimiter, convert_nil, false)
           end)
-        |> Enum.into([])
+        |> Enum.to_list()
       false ->
         map
         |> Enum.map(fn x ->
@@ -95,7 +95,7 @@ defmodule TransformMap do
           x
           |> expand(delimiter, parallel)
         end)
-        |> Enum.into([])
+        |> Enum.to_list()
       false ->
         map
         |> Enum.map(fn x ->
@@ -181,13 +181,8 @@ defmodule TransformMap do
 
   defp expand_list(list, delimiter) do
     list
-    |> Enum.reduce([], fn x, acc ->
-      value =
-        expand_key(x, delimiter)
-      _acc =
-        [value]
-        |> Enum.into(acc)
-    end)
+    |> Enum.reduce([], fn x, acc -> [expand_key(x, delimiter) | acc] end)
+    |> Enum.reverse()
   end
 
   defp middle_entries(list) do
@@ -200,15 +195,14 @@ defmodule TransformMap do
         value_2 =
           value_1
           |> List.delete_at(-1)
-        _acc =
-          [value_1]
-          |> Enum.concat([value_2])
-          |> Enum.into(acc)
+
+        acc ++ [value_1, value_2]
       end)
       |> Enum.uniq()
       |> Enum.filter(fn x ->
         x != []
       end)
+
     list
     |> Enum.concat(new)
     |> Enum.sort()
@@ -297,7 +291,7 @@ defmodule TransformMap do
       x
       |> get_keys()
     end)
-    |> Enum.into([])
+    |> Enum.to_list()
     |> List.flatten()
     |> Enum.uniq()
   end
@@ -470,10 +464,9 @@ defmodule TransformMap do
               |> list_to_string()
             [final_value]
           end)
-          |> Enum.into([])
           |> List.flatten()
       end)
-      |> Enum.into([])
+      |> Enum.to_list()
     _final =
       [header]
       |> Enum.concat(data)
