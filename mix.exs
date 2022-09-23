@@ -40,7 +40,7 @@ defmodule TransformMap.MixProject do
 
   defp deps do
     [
-      {:ex_doc, ">= 0.19.0", only: :dev},
+      {:ex_doc, "~> 0.28.5", only: :dev},
       {:parallel_stream, ">= 1.0.0"},
       {:csvlixir, ">= 2.0.0"},
       {:elixlsx, ">= 0.4.0"},

@@ -1,6 +1,6 @@
 defmodule TransformMap.Export do
   @moduledoc """
-  Documentation for TransformMap Export.
+  Functions for exporting maps to various formats.
   """
 
   alias Elixlsx.Workbook
@@ -8,47 +8,17 @@ defmodule TransformMap.Export do
 
   @base_dir "temp/"
 
-  defp base_dir(base) do
-    dir =
-      base
-      |> Path.expand()
-      |> Kernel.<>("/")
-    File.mkdir_p(dir)
-    dir
-  end
-
-  defp stream_file(stream_data, file) do
-    _stream_content =
-      stream_data
-      |> Stream.each(&(IO.write(file, &1)))
-      |> Stream.run()
-  end
-
-  defp file_close(status, file) do
-    case status do
-      :ok ->
-        File.close(file)
-      _ ->
-        :error
-    end
-  end
-
   @doc """
   Compress a file.
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> array = TransformMap.multiple_to_array(map, "|", true, true)
-    ...>
-    iex> {_status, full_path} = TransformMap.Export.to_csv(array, "test.csv", false, "temp/report")
-    ...>
-    iex> {status, _full_path} = TransformMap.Export.to_gzip(full_path)
-    ...>
-    iex> status
-    :ok
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> array = TransformMap.multiple_to_array(map, "|", true, true)
+      iex> {_status, full_path} = TransformMap.Export.to_csv(array, "test.csv", false, "temp/report")
+      iex> {status, _full_path} = TransformMap.Export.to_gzip(full_path)
+      iex> status
+      :ok
   """
   def to_gzip(full_path) do
     gz_path =
@@ -67,15 +37,11 @@ defmodule TransformMap.Export do
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> array = TransformMap.multiple_to_array(map, "|", true, true)
-    ...>
-    iex> {status, _full_path} = TransformMap.Export.to_xlsx(array, "test.xlsx", true, "temp/report")
-    ...>
-    iex> status
-    :ok
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> array = TransformMap.multiple_to_array(map, "|", true, true)
+      iex> {status, _full_path} = TransformMap.Export.to_xlsx(array, "test.xlsx", true, "temp/report")
+      iex> status
+      :ok
   """
   def to_xlsx(data, file_name, compress \\ true, directory \\ @base_dir) do
     sheet_name =
@@ -103,13 +69,10 @@ defmodule TransformMap.Export do
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> {status, _full_path} = TransformMap.Export.to_json(map, "test.json", true, "temp/report")
-    ...>
-    iex> status
-    :ok
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> {status, _full_path} = TransformMap.Export.to_json(map, "test.json", true, "temp/report")
+      iex> status
+      :ok
   """
   def to_json(data, file_name, compress \\ true, directory \\ @base_dir) do
     dir =
@@ -136,15 +99,11 @@ defmodule TransformMap.Export do
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> array = TransformMap.multiple_to_array(map, "|", true, true)
-    ...>
-    iex> {status, _full_path} = TransformMap.Export.to_csv(array, "test.csv", true, "temp/report")
-    ...>
-    iex> status
-    :ok
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> array = TransformMap.multiple_to_array(map, "|", true, true)
+      iex> {status, _full_path} = TransformMap.Export.to_csv(array, "test.csv", true, "temp/report")
+      iex> status
+      :ok
   """
   def to_csv(data, file_name, compress \\ true, directory \\ @base_dir) do
     dir =
@@ -170,4 +129,28 @@ defmodule TransformMap.Export do
     end
   end
 
+  defp base_dir(base) do
+    dir =
+      base
+      |> Path.expand()
+      |> Kernel.<>("/")
+    File.mkdir_p(dir)
+    dir
+  end
+
+  defp stream_file(stream_data, file) do
+    _stream_content =
+      stream_data
+      |> Stream.each(&(IO.write(file, &1)))
+      |> Stream.run()
+  end
+
+  defp file_close(status, file) do
+    case status do
+      :ok ->
+        File.close(file)
+      _ ->
+        :error
+    end
+  end
 end

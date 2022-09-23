@@ -1,251 +1,21 @@
 defmodule TransformMap do
   @moduledoc """
-  Documentation for TransformMap.
+  Functions for transforming maps.
   """
-
-  def now do
-    DateTime.utc_now()
-    |> DateTime.to_unix(:microseconds)
-  end
-
-  defp convert_decimal(value) do
-    case Decimal.decimal?(value) do
-      true ->
-        value
-        |> Decimal.to_float()
-      false ->
-        value
-    end
-  end
-
-  defp list_value(value) do
-    case is_list(value) do
-      true ->
-        value
-        |> List.flatten()
-      false ->
-        [value]
-    end
-  end
-
-  defp join_value(value, delimiter) do
-    case is_list(value) do
-      true ->
-        temp =
-          value
-          |> Enum.join(delimiter)
-        [temp]
-      false ->
-        [value]
-    end
-  end
-
-  defp other_keys(map, item, value, delimiter) do
-    keys =
-      item
-      |> get_keys()
-    _list =
-      keys
-      |> Enum.map(fn x ->
-        item =
-          [value, x]
-          |> List.flatten()
-        expand_other_keys(map, item, delimiter)
-      end)
-  end
-
-  defp expand_other_keys(map, item, delimiter) do
-    current =
-      item
-      |> List.last()
-    _new_value =
-      case is_integer(current) do
-        true ->
-          base_list =
-            item
-            |> List.delete_at(-1)
-          base_map =
-            map
-            |> get_in(base_list)
-          new_value =
-            base_map
-            |> Enum.at(current)
-          new_keys =
-            new_value
-            |> get_keys()
-          final_value =
-            new_keys
-            |> Enum.map(fn x ->
-              item
-              |> List.delete_at(-1)
-              |> Enum.concat([current])
-              |> Enum.concat([x])
-            end)
-          final_value
-          |> Enum.map(fn x ->
-            join_value(x, delimiter)
-          end)
-        false ->
-          single_keys(map, item, delimiter)
-      end
-  end
-
-  def list_maps_expand(item) do
-    item
-    |> Enum.reduce(%{}, fn (x, acc) ->
-      number =
-        acc
-        |> Enum.count()
-      temp_map =
-        %{
-          number => x
-        }
-      acc
-      |> Map.merge(temp_map)
-    end)
-  end
-
-  def type_keys(map, item, value, delimiter) do
-    case is_map(item) do
-      true ->
-        other_keys(map, item, value, delimiter)
-      false ->
-        case is_list(item) do
-          true ->
-            case is_map(List.first(item)) do
-              true ->
-                new_item =
-                  list_maps_expand(item)
-                other_keys(map, new_item, value, delimiter)
-              false ->
-                join_value(value, delimiter)
-            end
-          false ->
-            join_value(value, delimiter)
-        end
-    end
-  end
-
-  defp single_keys(map, value, delimiter) do
-    {status, item} =
-      case is_map(map) do
-        true ->
-          list =
-            list_value(value)
-          new_value =
-            map
-            |> get_in(list)
-          {:ok, new_value}
-        false ->
-          {:error, nil}
-      end
-    _temp_list =
-      case status do
-        :error ->
-          value
-        :ok ->
-          type_keys(map, item, value, delimiter)
-      end
-  end
-
-  defp convert_nil(item, convert_nil) do
-    case is_nil(item) do
-      true ->
-        case convert_nil do
-          true ->
-            ""
-          false ->
-            item
-        end
-      false ->
-        item
-    end
-  end
-
-  defp list_to_string(data) when is_list(data) do
-    data
-    |> Enum.map(fn x ->
-      "#{x}\n"
-    end)
-    |> List.to_string()
-  end
-  defp list_to_string(data), do: data
-
-  defp to_array_parallel(header, data, convert_nil) do
-    data =
-      data
-      |> ParallelStream.map(fn x ->
-        _new_line =
-          header
-          |> Enum.map(fn y ->
-            value =
-              x
-              |> Map.get(y)
-            final_value =
-              value
-              |> convert_nil(convert_nil)
-              |> list_to_string()
-            [final_value]
-          end)
-          |> Enum.into([])
-          |> List.flatten()
-      end)
-      |> Enum.into([])
-    _final =
-      [header]
-      |> Enum.concat(data)
-  end
-
-  defp to_array_normal(header, data, convert_nil) do
-    data
-    |> Enum.reduce([], fn x, acc ->
-      acc =
-        case acc == [] do
-          true ->
-            [header]
-          false ->
-            acc
-        end
-      new_line =
-        header
-        |> Enum.reduce([], fn y, line_acc ->
-          value =
-            x
-            |> Map.get(y)
-          final_value =
-            convert_nil(value, convert_nil)
-          _line_acc =
-            line_acc ++ [final_value]
-        end)
-      _acc =
-        acc
-        |> Enum.concat([new_line])
-    end)
-  end
-
-  defp to_array(header, data, convert_nil, parallel) do
-    case parallel do
-      true ->
-        to_array_parallel(header, data, convert_nil)
-      false ->
-        to_array_normal(header, data, convert_nil)
-    end
-  end
 
   @doc """
   Convert map to 2 dimensional array.
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> _array = TransformMap.multiple_to_array(map, ".", true, true)
-    [
-      ["id", "inserted_at", "key", "message.schedule_id",
-      "message.target.target_domain", "type"],
-      [4179, "2018-04-25 14:13:33.469994", "cGhpc2h4fDI5fD", "127", "mydomain.com",
-      "email"]
-    ]
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> _array = TransformMap.multiple_to_array(map, ".", true, true)
+      [
+        ["id", "inserted_at", "key", "message.schedule_id",
+        "message.target.target_domain", "type"],
+        [4179, "2018-04-25 14:13:33.469994", "cGhpc2h4fDI5fD", "127", "mydomain.com",
+        "email"]
+      ]
   """
   def multiple_to_array(map, delimiter \\ ".", convert_nil \\ true, parallel \\ true) do
     temp_data =
@@ -262,22 +32,20 @@ defmodule TransformMap do
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
-    ...>
-    iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
-    [
-      %{
-        "id" => 4179,
-        "inserted_at" => "2018-04-25 14:13:33.469994",
-        "key" => "cGhpc2h4fDI5fD",
-        "message.schedule_id" => "127",
-        "message.target.target_domain" => "mydomain.com",
-        "type" => "email"
-      }
-    ]
-    iex> shrink_map |> List.first() |> Map.get("message.target.target_domain")
-    "mydomain.com"
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}]
+      iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
+      [
+        %{
+          "id" => 4179,
+          "inserted_at" => "2018-04-25 14:13:33.469994",
+          "key" => "cGhpc2h4fDI5fD",
+          "message.schedule_id" => "127",
+          "message.target.target_domain" => "mydomain.com",
+          "type" => "email"
+        }
+      ]
+      iex> shrink_map |> List.first() |> Map.get("message.target.target_domain")
+      "mydomain.com"
   """
   def multiple_shrink(map, delimiter \\ ".", convert_nil \\ true, parallel \\ true) do
     case parallel do
@@ -302,24 +70,22 @@ defmodule TransformMap do
 
   ## Examples
 
-    iex> shrink_map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message.schedule_id" => "127", "message.target.target_domain" => "mydomain.com", "type" => "email"}]
-    ...>
-    iex> expand_map = TransformMap.multiple_expand(shrink_map, ".", true)
-    [
-      %{
-        "id" => 4179,
-        "inserted_at" => "2018-04-25 14:13:33.469994",
-        "key" => "cGhpc2h4fDI5fD",
-        "message" => %{
-          "schedule_id" => "127",
-          "target" => %{"target_domain" => "mydomain.com"}
-        },
-        "type" => "email"
-      }
-    ]
-    iex> expand_map |> List.first() |> get_in(["message", "target", "target_domain"])
-    "mydomain.com"
-
+      iex> shrink_map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message.schedule_id" => "127", "message.target.target_domain" => "mydomain.com", "type" => "email"}]
+      iex> expand_map = TransformMap.multiple_expand(shrink_map, ".", true)
+      [
+        %{
+          "id" => 4179,
+          "inserted_at" => "2018-04-25 14:13:33.469994",
+          "key" => "cGhpc2h4fDI5fD",
+          "message" => %{
+            "schedule_id" => "127",
+            "target" => %{"target_domain" => "mydomain.com"}
+          },
+          "type" => "email"
+        }
+      ]
+      iex> expand_map |> List.first() |> get_in(["message", "target", "target_domain"])
+      "mydomain.com"
   """
   def multiple_expand(map, delimiter \\ ".", parallel \\ true) do
     case parallel do
@@ -541,13 +307,10 @@ defmodule TransformMap do
 
   ## Examples
 
-    iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}, %{"action" => "open", "data" => %{"accept_language" => "pt", "action_group" => "open", "host" => "host.mydomain.com", "ip" => "127.0.0.1", "method" => "GET", "params" => %{"id" => "cGhpc2h4fDF8MXwx"}}, "referer" => nil, "user_agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36", "id" => 7, "updated_at" => "2018-04-01 13:52:48.648710", "key" => "cGhpc2h4fDF8MXwxfHJlZ3VsYXJ8MXwx"}]
-    ...>
-    iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
-    ...>
-    iex> _all_keys = TransformMap.multiple_keys(shrink_map, true)
-    ["action", "data.accept_language", "data.action_group", "data.host", "data.ip", "data.method", "data.params.id", "id", "inserted_at", "key", "message.schedule_id", "message.target.target_domain", "referer", "type", "updated_at", "user_agent"]
-
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}, %{"action" => "open", "data" => %{"accept_language" => "pt", "action_group" => "open", "host" => "host.mydomain.com", "ip" => "127.0.0.1", "method" => "GET", "params" => %{"id" => "cGhpc2h4fDF8MXwx"}}, "referer" => nil, "user_agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36", "id" => 7, "updated_at" => "2018-04-01 13:52:48.648710", "key" => "cGhpc2h4fDF8MXwxfHJlZ3VsYXJ8MXwx"}]
+      iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
+      iex> _all_keys = TransformMap.multiple_keys(shrink_map, true)
+      ["action", "data.accept_language", "data.action_group", "data.host", "data.ip", "data.method", "data.params.id", "id", "inserted_at", "key", "message.schedule_id", "message.target.target_domain", "referer", "type", "updated_at", "user_agent"]
   """
   def multiple_keys(map, parallel) do
     case parallel do
@@ -564,4 +327,227 @@ defmodule TransformMap do
     |> Map.keys()
   end
 
+  defp convert_decimal(value) do
+    case Decimal.decimal?(value) do
+      true ->
+        value
+        |> Decimal.to_float()
+      false ->
+        value
+    end
+  end
+
+  defp list_value(value) do
+    case is_list(value) do
+      true ->
+        value
+        |> List.flatten()
+      false ->
+        [value]
+    end
+  end
+
+  defp join_value(value, delimiter) do
+    case is_list(value) do
+      true ->
+        temp =
+          value
+          |> Enum.join(delimiter)
+        [temp]
+      false ->
+        [value]
+    end
+  end
+
+  defp other_keys(map, item, value, delimiter) do
+    keys =
+      item
+      |> get_keys()
+    _list =
+      keys
+      |> Enum.map(fn x ->
+        item =
+          [value, x]
+          |> List.flatten()
+        expand_other_keys(map, item, delimiter)
+      end)
+  end
+
+  defp expand_other_keys(map, item, delimiter) do
+    current =
+      item
+      |> List.last()
+    _new_value =
+      case is_integer(current) do
+        true ->
+          base_list =
+            item
+            |> List.delete_at(-1)
+          base_map =
+            map
+            |> get_in(base_list)
+          new_value =
+            base_map
+            |> Enum.at(current)
+          new_keys =
+            new_value
+            |> get_keys()
+          final_value =
+            new_keys
+            |> Enum.map(fn x ->
+              item
+              |> List.delete_at(-1)
+              |> Enum.concat([current])
+              |> Enum.concat([x])
+            end)
+          final_value
+          |> Enum.map(fn x ->
+            join_value(x, delimiter)
+          end)
+        false ->
+          single_keys(map, item, delimiter)
+      end
+  end
+
+  defp single_keys(map, value, delimiter) do
+    {status, item} =
+      case is_map(map) do
+        true ->
+          list =
+            list_value(value)
+          new_value =
+            map
+            |> get_in(list)
+          {:ok, new_value}
+        false ->
+          {:error, nil}
+      end
+    _temp_list =
+      case status do
+        :error ->
+          value
+        :ok ->
+          type_keys(map, item, value, delimiter)
+      end
+  end
+
+  defp convert_nil(item, convert_nil) do
+    case is_nil(item) do
+      true ->
+        case convert_nil do
+          true ->
+            ""
+          false ->
+            item
+        end
+      false ->
+        item
+    end
+  end
+
+  defp list_to_string(data) when is_list(data) do
+    data
+    |> Enum.map(fn x ->
+      "#{x}\n"
+    end)
+    |> List.to_string()
+  end
+  defp list_to_string(data), do: data
+
+  defp to_array_parallel(header, data, convert_nil) do
+    data =
+      data
+      |> ParallelStream.map(fn x ->
+        _new_line =
+          header
+          |> Enum.map(fn y ->
+            value =
+              x
+              |> Map.get(y)
+            final_value =
+              value
+              |> convert_nil(convert_nil)
+              |> list_to_string()
+            [final_value]
+          end)
+          |> Enum.into([])
+          |> List.flatten()
+      end)
+      |> Enum.into([])
+    _final =
+      [header]
+      |> Enum.concat(data)
+  end
+
+  defp to_array_normal(header, data, convert_nil) do
+    data
+    |> Enum.reduce([], fn x, acc ->
+      acc =
+        case acc == [] do
+          true ->
+            [header]
+          false ->
+            acc
+        end
+      new_line =
+        header
+        |> Enum.reduce([], fn y, line_acc ->
+          value =
+            x
+            |> Map.get(y)
+          final_value =
+            convert_nil(value, convert_nil)
+          _line_acc =
+            line_acc ++ [final_value]
+        end)
+      _acc =
+        acc
+        |> Enum.concat([new_line])
+    end)
+  end
+
+  defp to_array(header, data, convert_nil, parallel) do
+    case parallel do
+      true ->
+        to_array_parallel(header, data, convert_nil)
+      false ->
+        to_array_normal(header, data, convert_nil)
+    end
+  end
+
+  defp list_maps_expand(item) do
+    item
+    |> Enum.reduce(%{}, fn (x, acc) ->
+      number =
+        acc
+        |> Enum.count()
+      temp_map =
+        %{
+          number => x
+        }
+      acc
+      |> Map.merge(temp_map)
+    end)
+  end
+
+  defp type_keys(map, item, value, delimiter) do
+    case is_map(item) do
+      true ->
+        other_keys(map, item, value, delimiter)
+      false ->
+        case is_list(item) do
+          true ->
+            case is_map(List.first(item)) do
+              true ->
+                new_item =
+                  list_maps_expand(item)
+                other_keys(map, new_item, value, delimiter)
+              false ->
+                join_value(value, delimiter)
+            end
+          false ->
+            join_value(value, delimiter)
+        end
+    end
+  end
 end
