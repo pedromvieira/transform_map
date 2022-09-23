@@ -106,21 +106,18 @@ defmodule TransformMap.Export do
       :ok
   """
   def to_csv(data, file_name, compress \\ true, directory \\ @base_dir) do
-    dir =
-      directory
-      |> base_dir()
-    full_path =
-      dir <> file_name
-    file =
-      File.open!(full_path, [:write, :utf8])
+    dir = base_dir(directory)
+    full_path = dir <> file_name
+    file = File.open!(full_path, [:write, :utf8])
+
     stream_data =
       data
       |> Stream.map(&(&1))
       |> CSVLixir.write
-    stream_status =
-      stream_file(stream_data, file)
-    status =
-      file_close(stream_status, file)
+
+    :ok = stream_file(stream_data, file)
+    status = File.close(file)
+
     case compress do
       true ->
         to_gzip(full_path)
@@ -143,14 +140,5 @@ defmodule TransformMap.Export do
       stream_data
       |> Stream.each(&(IO.write(file, &1)))
       |> Stream.run()
-  end
-
-  defp file_close(status, file) do
-    case status do
-      :ok ->
-        File.close(file)
-      _ ->
-        :error
-    end
   end
 end

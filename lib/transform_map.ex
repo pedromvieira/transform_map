@@ -53,14 +53,14 @@ defmodule TransformMap do
         map
         |> ParallelStream.map(fn x ->
             x
-            |> shrink(delimiter, convert_nil, false)
+            |> shrink(delimiter, convert_nil)
           end)
         |> Enum.to_list()
       false ->
         map
         |> Enum.map(fn x ->
           x
-          |> shrink(delimiter, convert_nil, false)
+          |> shrink(delimiter, convert_nil)
         end)
       end
   end
@@ -103,6 +103,26 @@ defmodule TransformMap do
           |> expand(delimiter, parallel)
         end)
     end
+  end
+
+  @doc """
+  Get All Unique Keys from several maps.
+
+  ## Examples
+
+      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}, %{"action" => "open", "data" => %{"accept_language" => "pt", "action_group" => "open", "host" => "host.mydomain.com", "ip" => "127.0.0.1", "method" => "GET", "params" => %{"id" => "cGhpc2h4fDF8MXwx"}}, "referer" => nil, "user_agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36", "id" => 7, "updated_at" => "2018-04-01 13:52:48.648710", "key" => "cGhpc2h4fDF8MXwxfHJlZ3VsYXJ8MXwx"}]
+      iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
+      iex> _all_keys = TransformMap.multiple_keys(shrink_map, true)
+      ["action", "data.accept_language", "data.action_group", "data.host", "data.ip", "data.method", "data.params.id", "id", "inserted_at", "key", "message.schedule_id", "message.target.target_domain", "referer", "type", "updated_at", "user_agent"]
+  """
+  def multiple_keys(map, parallel) do
+    case parallel do
+      true ->
+        multiple_keys_parallel(map)
+      false ->
+        multiple_keys_normal(map)
+    end
+    |> Enum.sort()
   end
 
   defp shrink_normal(map, delimiter, convert_nil) do
@@ -170,13 +190,8 @@ defmodule TransformMap do
       end)
   end
 
-  defp shrink(map, delimiter, convert_nil, parallel) do
-    case parallel do
-      true ->
-        shrink_normal(map, delimiter, convert_nil)
-      false ->
-        shrink_normal(map, delimiter, convert_nil)
-    end
+  defp shrink(map, delimiter, convert_nil) do
+    shrink_normal(map, delimiter, convert_nil)
   end
 
   defp expand_list(list, delimiter) do
@@ -296,26 +311,6 @@ defmodule TransformMap do
     |> Enum.uniq()
   end
 
-  @doc """
-  Get All Unique Keys from several maps.
-
-  ## Examples
-
-      iex> map = [%{"id" => 4179, "inserted_at" => "2018-04-25 14:13:33.469994", "key" => "cGhpc2h4fDI5fD", "message" => %{"schedule_id" => "127", "target" => %{"target_domain" => "mydomain.com"} }, "type" => "email"}, %{"action" => "open", "data" => %{"accept_language" => "pt", "action_group" => "open", "host" => "host.mydomain.com", "ip" => "127.0.0.1", "method" => "GET", "params" => %{"id" => "cGhpc2h4fDF8MXwx"}}, "referer" => nil, "user_agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36", "id" => 7, "updated_at" => "2018-04-01 13:52:48.648710", "key" => "cGhpc2h4fDF8MXwxfHJlZ3VsYXJ8MXwx"}]
-      iex> shrink_map = TransformMap.multiple_shrink(map, ".", true, true)
-      iex> _all_keys = TransformMap.multiple_keys(shrink_map, true)
-      ["action", "data.accept_language", "data.action_group", "data.host", "data.ip", "data.method", "data.params.id", "id", "inserted_at", "key", "message.schedule_id", "message.target.target_domain", "referer", "type", "updated_at", "user_agent"]
-  """
-  def multiple_keys(map, parallel) do
-    case parallel do
-      true ->
-        multiple_keys_parallel(map)
-      false ->
-        multiple_keys_normal(map)
-    end
-    |> Enum.sort()
-  end
-
   defp get_keys(map) do
     map
     |> Map.keys()
@@ -403,26 +398,10 @@ defmodule TransformMap do
       end
   end
 
-  defp single_keys(map, value, delimiter) do
-    {status, item} =
-      case is_map(map) do
-        true ->
-          list =
-            list_value(value)
-          new_value =
-            map
-            |> get_in(list)
-          {:ok, new_value}
-        false ->
-          {:error, nil}
-      end
-    _temp_list =
-      case status do
-        :error ->
-          value
-        :ok ->
-          type_keys(map, item, value, delimiter)
-      end
+  defp single_keys(map, value, delimiter) when is_map(map) do
+    list = list_value(value)
+    item = get_in(map, list)
+    type_keys(map, item, value, delimiter)
   end
 
   defp convert_nil(item, convert_nil) do
